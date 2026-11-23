@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EpiEthic-AI — Ethical & Privacy-Constrained Machine Learning in Public Health</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Local Chart.js library for 100% offline standalone execution -->
+    <script src="chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Top Header & Navigation -->
+    <header class="top-nav">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-badge">EPI-ETHIC ML</div>
+                <div class="brand-text">
+                    <h1>EpiEthic-AI</h1>
+                    <span class="brand-sub">Ethically-Constrained Machine Learning & Differential Privacy on CDC BRFSS Data</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <button class="nav-btn active" data-target="view-inference">Live Patient Triage (AI Inference)</button>
+                <button class="nav-btn" data-target="view-grid">Privacy &times; Fairness 2&times;4 Grid</button>
+                <button class="nav-btn" data-target="view-scorecard">Lifecycle Ethics Scorecard</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout Grid -->
+    <main class="app-layout">
+        <!-- Sidebar Controls: Real CDC BRFSS Patient Indicators -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Patient Clinical Vitals</h2>
+                <p class="sidebar-sub">CDC BRFSS Health Indicators (253,680 Cohort)</p>
+            </div>
+
+            <!-- General Health (GenHlth) -->
+            <div class="control-group">
+                <div class="slider-header">
+                    <label class="control-label">General Health (GenHlth):</label>
+                    <span id="val-genhlth" class="slider-val">Good (3)</span>
+                </div>
+                <input type="range" id="input-genhlth" class="range-slider" min="1" max="5" step="1" value="3">
+                <p class="control-help">1 = Excellent, 2 = Very Good, 3 = Good, 4 = Fair, 5 = Poor</p>
+            </div>
+
+            <!-- Body Mass Index (BMI) -->
+            <div class="control-group">
+                <div class="slider-header">
+                    <label class="control-label">Body Mass Index (BMI):</label>
+                    <span id="val-bmi" class="slider-val">28.0</span>
+                </div>
+                <input type="range" id="input-bmi" class="range-slider" min="16" max="52" step="1" value="28">
+            </div>
+
+            <hr class="divider">
+
+            <!-- Binary Clinical Indicators -->
+            <div class="control-group">
+                <label class="control-label">Clinical Risk Indicators:</label>
+                <div class="checkbox-grid">
+                    <label class="check-item">
+                        <input type="checkbox" id="input-highbp" checked>
+                        <span>High Blood Pressure (HighBP)</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" id="input-highchol" checked>
+                        <span>High Cholesterol (HighChol)</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" id="input-heartdis">
+                        <span>Heart Disease / Prior Attack</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" id="input-stroke">
+                        <span>History of Stroke</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" id="input-diffwalk">
+                        <span>Difficulty Walking (DiffWalk)</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" id="input-smoker" checked>
+                        <span>Smoker (&ge;100 cigarettes)</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" id="input-physact" checked>
+                        <span>Physical Activity (Past 30d)</span>
+                    </label>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Demographics & Healthcare Access -->
+            <div class="control-group">
+                <label class="control-label">Biological Sex:</label>
+                <div class="radio-toggle">
+                    <label class="radio-chip">
+                        <input type="radio" name="input-sex" value="0" checked>
+                        <span>Female</span>
+                    </label>
+                    <label class="radio-chip">
+                        <input type="radio" name="input-sex" value="1">
+                        <span>Male</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-header">
+                    <label class="control-label">Annual Household Income:</label>
+                    <span id="val-income" class="slider-val">Bracket 3 (<$20k)</span>
+                </div>
+                <input type="range" id="input-income" class="range-slider" min="1" max="8" step="1" value="3">
+                <p class="control-help">1: &lt;$10k, 3: &lt;$20k (Vulnerable), 8: &gt;$75k</p>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-header">
+                    <label class="control-label">Age Bracket:</label>
+                    <span id="val-age" class="slider-val">60-64 yrs (Cat 9)</span>
+                </div>
+                <input type="range" id="input-age" class="range-slider" min="1" max="13" step="1" value="9">
+                <p class="control-help">1 = 18-24, 7 = 50-54, 9 = 60-64, 13 = 80+</p>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-header">
+                    <label class="control-label">Physically Unhealthy Days (0-30):</label>
+                    <span id="val-physhlth" class="slider-val">5 Days</span>
+                </div>
+                <input type="range" id="input-physhlth" class="range-slider" min="0" max="30" step="1" value="5">
+            </div>
+
+            <div class="control-group">
+                <div class="slider-header">
+                    <label class="control-label">Clinical Triage Threshold (&tau;):</label>
+                    <span id="val-threshold" class="slider-val">0.50</span>
+                </div>
+                <input type="range" id="input-threshold" class="range-slider" min="0.15" max="0.85" step="0.05" value="0.50">
+                <p class="control-help">Probability cutoff for positive screening flag (&ge;&tau;).</p>
+            </div>
+
+            <div class="control-group">
+                <label class="check-item" style="margin-top: 4px;">
+                    <input type="checkbox" id="input-nodocbccost" checked>
+                    <span>Could Not See Doctor Due to Cost</span>
+                </label>
+            </div>
+
+            <button id="btn-reset-patient" class="btn-secondary" style="width: 100%; margin-top: 1rem;">
+                Load Representative Vulnerable Case
+            </button>
+        </aside>
+
+        <!-- Main Content Panel -->
+        <section class="content-panel">
+
+            <!-- ============================================== -->
+            <!-- VIEW 1: LIVE PATIENT TRIAGE (AI INFERENCE) -->
+            <!-- ============================================== -->
+            <div id="view-inference" class="view-section active">
+                <div class="view-header">
+                    <div class="view-title-block">
+                        <h2>Live Clinical AI Triage across Ethical &amp; Privacy Objectives</h2>
+                        <p class="view-desc">
+                            Evaluating an individual patient's predicted chronic metabolic disease risk using 8 real trained models on 253,680 CDC BRFSS records.
+                        </p>
+                    </div>
+                    <div class="empirical-badge">
+                        <span class="dot"></span> Real CDC BRFSS Data (N=253,680)
+                    </div>
+                </div>
+
+                <!-- Prediction Comparison Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card" id="card-util-inf">
+                        <div class="metric-pill pill-dark">Average-Loss (&epsilon; = &infin;)</div>
+                        <div class="metric-value" id="pred-util-prob">0.0%</div>
+                        <div class="metric-sub" id="pred-util-tier">Risk: —</div>
+                        <div class="metric-footer">Utilitarian ERM Baseline</div>
+                    </div>
+
+                    <div class="metric-card" id="card-rawls-inf">
+                        <div class="metric-pill pill-brown">Rawlsian Minimax (&epsilon; = &infin;)</div>
+                        <div class="metric-value" id="pred-rawls-prob">0.0%</div>
+                        <div class="metric-sub" id="pred-rawls-tier">Risk: —</div>
+                        <div class="metric-footer">Group DRO on Vulnerable Subgroup</div>
+                    </div>
+
+                    <div class="metric-card" id="card-util-dp">
+                        <div class="metric-pill pill-slate">Average-Loss (&epsilon; = 1.0)</div>
+                        <div class="metric-value" id="pred-util-dp-prob">0.0%</div>
+                        <div class="metric-sub" id="pred-util-dp-tier">Risk: —</div>
+                        <div class="metric-footer">High Differential Privacy</div>
+                    </div>
+
+                    <div class="metric-card" id="card-rawls-dp">
+                        <div class="metric-pill pill-bronze">Rawlsian Minimax (&epsilon; = 1.0)</div>
+                        <div class="metric-value" id="pred-rawls-dp-prob">0.0%</div>
+                        <div class="metric-sub" id="pred-rawls-dp-tier">Risk: —</div>
+                        <div class="metric-footer">DP + Minimax Protection</div>
+                    </div>
+                </div>
+
+                <!-- Comparison & Feature Contribution -->
+                <div class="charts-grid-2">
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Predicted Disease Risk Probability Across the 2 &times; 4 Grid</h3>
+                                <p class="chart-caption">Comparing Average-Loss vs. Rawlsian Minimax at four Differential Privacy levels (&epsilon;).</p>
+                            </div>
+                        </div>
+                        <div class="canvas-wrap" style="height: 280px;">
+                            <canvas id="chart-patient-grid"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Primary Clinical Feature Drivers (Coefficients)</h3>
+                                <p class="chart-caption">Regression weights identifying leading diagnostic factors in the CDC BRFSS cohort.</p>
+                            </div>
+                        </div>
+                        <div class="canvas-wrap" style="height: 280px;">
+                            <canvas id="chart-feature-imp"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Subgroup Disparity Alert Box -->
+                <div class="case-info-card" style="margin-top: 1.5rem;" id="patient-disparity-note">
+                    <div class="case-info-header">
+                        <span class="badge-tag">Ethical Decision Analysis</span>
+                        <h3>Subgroup Vulnerability Context</h3>
+                    </div>
+                    <p id="patient-status-text">
+                        The current patient profile falls into the <strong>Low-Income (&le;$20,000/yr) &amp; Elderly (60+ yrs)</strong> cohort. Under standard average-loss ERM with strict differential privacy, minority subgroups suffer disproportionate classification error. The Rawlsian model actively penalizes worst-off group loss to ensure equitable clinical detection.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- VIEW 2: PRIVACY X FAIRNESS 2X4 MATRIX -->
+            <!-- ============================================== -->
+            <div id="view-grid" class="view-section">
+                <div class="view-header">
+                    <div class="view-title-block">
+                        <h2>The Privacy &times; Fairness 2 &times; 4 Experimental Matrix</h2>
+                        <p class="view-desc">
+                            Empirical measurement of the interaction between Differential Privacy (&epsilon; &isin; {&infin;, 5.0, 1.0, 0.5}) and Distributive Objectives (Average-Loss vs. Rawlsian Minimax).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Complete 2x4 Data Table -->
+                <div class="table-container">
+                    <table class="data-table" id="table-2x4">
+                        <thead>
+                            <tr>
+                                <th>Distributive Objective</th>
+                                <th>Privacy Level (&epsilon;)</th>
+                                <th>Overall Accuracy</th>
+                                <th>Test AUROC</th>
+                                <th>Overall Loss</th>
+                                <th>Worst-Off Group Loss</th>
+                                <th>Disparity Gap</th>
+                                <th>Disparate Impact Ratio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body-2x4">
+                            <!-- Injected dynamically from trained JSON -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Charts Grid: Bagdasaryan Disparate Impact & Worst-Off Loss Curves -->
+                <div class="charts-grid-2" style="margin-top: 1.5rem;">
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Worst-Off Group Loss vs. Privacy Budget (&epsilon;)</h3>
+                                <p class="chart-caption">Measuring how tightening differential privacy alters loss for the vulnerable cohort.</p>
+                            </div>
+                        </div>
+                        <div class="canvas-wrap" style="height: 300px;">
+                            <canvas id="chart-dp-fairness"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="insight-box">
+                        <h3>Empirical Findings: Privacy &times; Fairness Interaction</h3>
+                        <div class="insight-item">
+                            <span class="insight-num">01</span>
+                            <div>
+                                <h4>Decoupled Orthogonal Axes</h4>
+                                <p>Differential Privacy is an informational constraint, not a competing distributive philosophy. A public health system can require both patient privacy and ethical fairness.</p>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <span class="insight-num">02</span>
+                            <div>
+                                <h4>Bagdasaryan et al. (2019) Disparate Impact Finding</h4>
+                                <p>Under Average-Loss ERM, adding differential privacy noise (&epsilon; = 0.5) degrades accuracy on vulnerable socio-economic groups more severely than on the majority class.</p>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <span class="insight-num">03</span>
+                            <div>
+                                <h4>Rawlsian Minimax Protection (Group DRO)</h4>
+                                <p>The Rawlsian objective (&min; &max;<sub>g</sub> &Lscr;<sub>g</sub>) forces the optimization to place higher weights on the worst-off subgroup, effectively buffering it against privacy-induced degradation.</p>
+                            </div>
+                        </div>
+
+                        <hr class="divider">
+                        <button id="btn-run-live-batch" class="btn-primary" style="margin-top: 0.5rem; width: 100%;">
+                            ⚡ Run Live Test on 500 Real CDC Patients
+                        </button>
+                        <div id="live-batch-output" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--color-text-muted); display: none;">
+                            <!-- Injected live -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- VIEW 3: LIFECYCLE ETHICS SCORECARD -->
+            <!-- ============================================== -->
+            <div id="view-scorecard" class="view-section">
+                <div class="view-header">
+                    <div class="view-title-block">
+                        <h2>Operational Lifecycle Ethics Scorecard Tool</h2>
+                        <p class="view-desc">
+                            Auditing the CDC BRFSS Public Health Screening Model and real-world clinical AI against WHO (2021) and ICMR (2023) guidelines across 20 parameters.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Benchmark Case Study Selector -->
+                <div class="scorecard-case-bar">
+                    <label for="select-case-study" class="control-label" style="margin-bottom: 0;">Audit Target System:</label>
+                    <select id="select-case-study" class="form-select" style="max-width: 420px;">
+                        <option value="brfss_screening" selected>CDC BRFSS AI Diabetes Screening Model (Our System)</option>
+                        <option value="epic_sepsis">Epic Sepsis Model (In-Hospital Triage Audit)</option>
+                        <option value="aarogya_setu">Aarogya Setu (COVID-19 Contact Tracing Audit)</option>
+                        <option value="tb_chest_xray">AI Chest X-Ray TB Screening (ICMR / qXR Audit)</option>
+                        <option value="ventilator_triage">Crisis Ventilator Triage (SOFA Protocol Audit)</option>
+                    </select>
+                </div>
+
+                <!-- Case Study Details Card -->
+                <div class="case-info-card" id="case-info-container">
+                    <div class="case-info-header">
+                        <span id="case-badge" class="badge-tag">Chronic Disease Screening</span>
+                        <h3 id="case-title">CDC BRFSS AI Diabetes Screening Model</h3>
+                    </div>
+                    <p id="case-desc">A population-level screening model trained on 253,680 CDC BRFSS records to triage high-risk individuals for confirmatory diagnostic testing.</p>
+                    <div class="case-meta">
+                        <div><strong>Implementer:</strong> <span id="case-implementer">Public Health Department</span></div>
+                        <div><strong>Scale:</strong> <span id="case-scale">253,680 Real Patient Records</span></div>
+                        <div><strong>Validation:</strong> <span id="case-citation">Empirical Group DRO &amp; Differential Privacy Evaluation</span></div>
+                    </div>
+                    <div class="case-failure-alert">
+                        <strong>Governance Assessment:</strong>
+                        <span id="case-failure">Ethically regularized via Rawlsian Minimax loss with differential privacy verification to mitigate socioeconomic disparities.</span>
+                    </div>
+                </div>
+
+                <!-- Live Score & Radar Summary -->
+                <div class="score-summary-grid">
+                    <div class="score-banner">
+                        <div class="score-number-block">
+                            <span class="score-big" id="score-percentage">84.2%</span>
+                            <span class="score-lbl">Overall Ethical Compliance</span>
+                        </div>
+                        <div class="score-tier-badge" id="score-tier-badge">Ethically Robust (Low Risk)</div>
+                        <p class="score-directive" id="score-directive">Meets high standards across WHO and ICMR guidelines. Certified for prospective health screening pilot.</p>
+                        <button id="btn-export-cert" class="btn-primary" style="margin-top: 1rem;">Export Official Audit Certificate (.md)</button>
+                    </div>
+
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Lifecycle Compliance Profile</h3>
+                                <p class="chart-caption">Performance across the 4 governance stages.</p>
+                            </div>
+                        </div>
+                        <div class="canvas-wrap" style="height: 280px;">
+                            <canvas id="chart-radar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Lifecycle Stages Expandable Forms -->
+                <div class="stages-container" id="stages-form-container">
+                    <!-- Dynamic rendering of 4 stages and 20 metrics -->
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Embedded Trained Models and Controllers -->
+    <script src="models_data.js"></script>
+    <script src="scorecard.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
