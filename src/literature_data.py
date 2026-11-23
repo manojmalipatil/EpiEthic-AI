@@ -1,6 +1,6 @@
 """
 Peer-Reviewed Literature Matrix for EpiEthic-AI.
-Curated database of 26 foundational papers on public health AI ethics, distributive justice,
+Curated database of 29 foundational papers on public health AI ethics, distributive justice,
 algorithmic bias, epidemiological modeling, and clinical governance.
 """
 
@@ -318,5 +318,41 @@ LITERATURE_DATABASE: List[Dict[str, Any]] = [
         "core_contribution": "Pioneered multi-compartment agent and population simulations demonstrating critical care capacity surge curves and the mathematical mechanics of ICU saturation.",
         "relevance_to_project": "Informs our multi-compartment SEIR-HCD modeling logic and bed constraint metrics.",
         "ethical_focus": "Healthcare Capacity Limits, Surge Rationing, Mitigation Dynamics"
+    },
+    {
+        "id": "CRENSHAW_1989",
+        "category": "Intersectional Fairness & Algorithmic Bias",
+        "citation": "Crenshaw, K. (1989). Demarginalizing the intersection of race and sex: A Black feminist critique of antidiscrimination doctrine, feminist theory and antiracist politics. University of Chicago Legal Forum, 1989(1), 139-167.",
+        "year": 1989,
+        "authors": "Kimberle Crenshaw",
+        "title": "Demarginalizing the Intersection of Race and Sex",
+        "journal": "University of Chicago Legal Forum",
+        "core_contribution": "Introduced the foundational legal and analytical framework of intersectionality, demonstrating that multi-axis discrimination cannot be understood by examining identity categories in isolation.",
+        "relevance_to_project": "Direct theoretical basis for our Intersectional Fairness Matrix crossing age and income cohorts (C1 to C4).",
+        "ethical_focus": "Intersectionality, Multi-Axis Disparities, Structural Margins"
+    },
+    {
+        "id": "BUOLAMWINI_2018",
+        "category": "Intersectional Fairness & Algorithmic Bias",
+        "citation": "Buolamwini, J., & Gebru, T. (2018). Gender shades: Intersectional accuracy disparities in commercial gender classification. Proceedings of Machine Learning Research (PMLR), 81, 77-91.",
+        "year": 2018,
+        "authors": "Joy Buolamwini, Timnit Gebru",
+        "title": "Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification",
+        "journal": "FAccT / FAT* Conference",
+        "core_contribution": "Demonstrated that commercial facial analysis models achieved near-perfect accuracy on lighter males but failed severely on darker females (error rate up to 34.7%), proving the necessity of intersectional error benchmarking.",
+        "relevance_to_project": "Guides our empirical demonstration of compound vulnerability in CDC BRFSS public health screening.",
+        "ethical_focus": "Intersectional Model Auditing, Subgroup Benchmarking, Empirical Bias"
+    },
+    {
+        "id": "WACHTER_2017",
+        "category": "Explainability & Algorithmic Recourse",
+        "citation": "Wachter, S., Mittelstadt, B., & Russell, C. (2017). Counterfactual explanations without opening the black box: Automated decisions and the GDPR. Harvard Journal of Law & Technology, 31(2), 841-887.",
+        "year": 2017,
+        "authors": "Sandra Wachter, Brent Mittelstadt, Chris Russell",
+        "title": "Counterfactual Explanations Without Opening the Black Box: Automated Decisions and the GDPR",
+        "journal": "Harvard Journal of Law & Technology",
+        "core_contribution": "Formalized counterfactual algorithmic explanations as a distance minimization problem to discover the minimum perturbation required to achieve a desired model outcome, satisfying GDPR Article 22 requirements.",
+        "relevance_to_project": "Formulates the mathematical optimization solver behind our Tab 1 Local Counterfactual Algorithmic Recourse engine.",
+        "ethical_focus": "Algorithmic Recourse, Contestability, Minimal Actionable Intervention"
     }
 ]

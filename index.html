@@ -233,6 +233,20 @@
                     </div>
                 </div>
 
+                <!-- Actionable Counterfactual Recourse Card (Wachter et al. 2017) -->
+                <div class="case-info-card" style="margin-top: 1.5rem;" id="card-counterfactual">
+                    <div class="case-info-header">
+                        <span class="badge-tag">Algorithmic Recourse &bull; Wachter et al. (2017)</span>
+                        <h3>Actionable Counterfactual Explanation</h3>
+                    </div>
+                    <p id="counterfactual-desc" style="font-size: 0.9rem; line-height: 1.5;">
+                        Calculating minimum clinically actionable modifications to cross below the triage threshold...
+                    </p>
+                    <div id="counterfactual-stats" style="display: flex; gap: 20px; font-size: 0.82rem; margin-top: 8px;">
+                        <!-- Injected live -->
+                    </div>
+                </div>
+
                 <!-- Live Subgroup Disparity Alert Box -->
                 <div class="case-info-card" style="margin-top: 1.5rem;" id="patient-disparity-note">
                     <div class="case-info-header">
@@ -279,7 +293,7 @@
                     </table>
                 </div>
 
-                <!-- Charts Grid: Bagdasaryan Disparate Impact & Worst-Off Loss Curves -->
+                <!-- Charts Grid: Bagdasaryan Disparate Impact & Subgroup ROC Curves -->
                 <div class="charts-grid-2" style="margin-top: 1.5rem;">
                     <div class="chart-box">
                         <div class="chart-header">
@@ -291,6 +305,76 @@
                         <div class="canvas-wrap" style="height: 300px;">
                             <canvas id="chart-dp-fairness"></canvas>
                         </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <div>
+                                <h3>Subgroup ROC Curves (High-Income vs. Low-Income)</h3>
+                                <p class="chart-caption">Comparing True Positive Rate vs. False Positive Rate across socioeconomic cohorts.</p>
+                            </div>
+                        </div>
+                        <div class="canvas-wrap" style="height: 300px;">
+                            <canvas id="chart-subgroup-roc"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Intersectional Fairness Matrix Table -->
+                <div class="chart-box" style="margin-top: 1.5rem;">
+                    <div class="chart-header">
+                        <div>
+                            <h3>Intersectional Fairness Matrix (Buolamwini &amp; Gebru 2018; Crenshaw 1989)</h3>
+                            <p class="chart-caption">
+                                Evaluating compound vulnerability: Income (&le;$20k/yr) &times; Age (&ge;60 yrs) across 253,680 CDC BRFSS records.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="table-container" style="box-shadow: none; border-radius: 4px;">
+                        <table class="data-table" id="table-intersectional">
+                            <thead>
+                                <tr>
+                                    <th>Intersectional Demographic Slice</th>
+                                    <th>Sample Size (N)</th>
+                                    <th>Disease Prevalence</th>
+                                    <th>Average-Loss Accuracy</th>
+                                    <th>Rawlsian Accuracy</th>
+                                    <th>Average-Loss Sensitivity (TPR)</th>
+                                    <th>Rawlsian Sensitivity (TPR)</th>
+                                    <th>Disparity Mitigation</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-intersectional">
+                                <!-- Injected dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Kleinberg Impossibility Theorem & Live Test Box -->
+                <div class="charts-grid-2" style="margin-top: 1.5rem;">
+                    <div class="insight-box">
+                        <h3>Kleinberg's Impossibility Theorem Live Proof (2016)</h3>
+                        <p style="font-size: 0.82rem; color: var(--color-text-muted); margin-bottom: 12px;">
+                            Kleinberg et al. mathematically proved that three primary fairness definitions are <strong>mutually incompatible</strong> whenever base rates differ between demographic groups.
+                        </p>
+                        <div class="table-container" style="box-shadow: none; border-radius: 4px; margin-bottom: 12px;">
+                            <table class="data-table" style="font-size: 0.82rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Fairness Criterion</th>
+                                        <th>Average-Loss Model</th>
+                                        <th>Rawlsian Minimax</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-kleinberg">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p style="font-size: 0.78rem; color: var(--color-text-light); line-height: 1.4;">
+                            Notice that while Rawlsian Group DRO significantly narrows the <strong>Equal Opportunity Difference</strong> (protecting vulnerable sensitivity), <strong>Demographic Parity</strong> cannot be zero because base diabetes prevalence is 29.0% in low-income elderly vs. 7.1% in young high-income patients!
+                        </p>
                     </div>
 
                     <div class="insight-box">

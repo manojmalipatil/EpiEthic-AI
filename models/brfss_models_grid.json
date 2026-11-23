@@ -14139,5 +14139,182 @@
       "target": 0,
       "is_low_income": 1
     }
-  ]
+  ],
+  "intersectional_results": {
+    "c1_high_young": {
+      "name": "High-Income, Younger (<60 yrs)",
+      "sample_size": 28456,
+      "prevalence_pct": 7.13,
+      "util": {
+        "accuracy": 92.9,
+        "tpr": 6.8,
+        "fpr": 0.48,
+        "ppv": 51.88,
+        "selection_rate": 0.93
+      },
+      "rawls": {
+        "accuracy": 92.84,
+        "tpr": 6.75,
+        "fpr": 0.55,
+        "ppv": 48.58,
+        "selection_rate": 0.99
+      }
+    },
+    "c2_high_elderly": {
+      "name": "High-Income, Elderly (60+ yrs)",
+      "sample_size": 25648,
+      "prevalence_pct": 17.69,
+      "util": {
+        "accuracy": 82.62,
+        "tpr": 13.88,
+        "fpr": 2.6,
+        "ppv": 53.44,
+        "selection_rate": 4.6
+      },
+      "rawls": {
+        "accuracy": 82.7,
+        "tpr": 12.52,
+        "fpr": 2.21,
+        "ppv": 54.88,
+        "selection_rate": 4.04
+      }
+    },
+    "c3_low_young": {
+      "name": "Low-Income, Younger (<60 yrs)",
+      "sample_size": 4226,
+      "prevalence_pct": 17.61,
+      "util": {
+        "accuracy": 83.13,
+        "tpr": 24.6,
+        "fpr": 4.37,
+        "ppv": 54.63,
+        "selection_rate": 7.93
+      },
+      "rawls": {
+        "accuracy": 83.32,
+        "tpr": 23.66,
+        "fpr": 3.93,
+        "ppv": 56.23,
+        "selection_rate": 7.41
+      }
+    },
+    "c4_low_elderly": {
+      "name": "Low-Income, Elderly (Compound Vulnerable)",
+      "sample_size": 5090,
+      "prevalence_pct": 29.96,
+      "util": {
+        "accuracy": 70.51,
+        "tpr": 29.9,
+        "fpr": 12.12,
+        "ppv": 51.35,
+        "selection_rate": 17.45
+      },
+      "rawls": {
+        "accuracy": 71.0,
+        "tpr": 26.16,
+        "fpr": 9.82,
+        "ppv": 53.27,
+        "selection_rate": 14.72
+      }
+    }
+  },
+  "roc_curves": {
+    "fpr_base": [
+      0.0,
+      0.071,
+      0.143,
+      0.214,
+      0.286,
+      0.357,
+      0.429,
+      0.5,
+      0.571,
+      0.643,
+      0.714,
+      0.786,
+      0.857,
+      0.929,
+      1.0
+    ],
+    "util_high_income": [
+      0.0,
+      0.352,
+      0.556,
+      0.685,
+      0.779,
+      0.844,
+      0.896,
+      0.932,
+      0.956,
+      0.974,
+      0.986,
+      0.993,
+      0.996,
+      0.999,
+      1.0
+    ],
+    "util_low_income": [
+      0.0,
+      0.249,
+      0.433,
+      0.574,
+      0.688,
+      0.776,
+      0.844,
+      0.888,
+      0.924,
+      0.951,
+      0.977,
+      0.986,
+      0.996,
+      1.0,
+      1.0
+    ],
+    "rawls_high_income": [
+      0.0,
+      0.358,
+      0.551,
+      0.68,
+      0.769,
+      0.835,
+      0.889,
+      0.926,
+      0.951,
+      0.971,
+      0.984,
+      0.991,
+      0.996,
+      0.998,
+      1.0
+    ],
+    "rawls_low_income": [
+      0.0,
+      0.261,
+      0.433,
+      0.576,
+      0.687,
+      0.786,
+      0.849,
+      0.89,
+      0.925,
+      0.955,
+      0.977,
+      0.988,
+      0.996,
+      0.999,
+      1.0
+    ]
+  },
+  "kleinberg_metrics": {
+    "utilitarian": {
+      "demographic_parity_diff": 16.52,
+      "equal_opportunity_diff": 23.1,
+      "predictive_parity_diff": 0.53
+    },
+    "rawlsian": {
+      "demographic_parity_diff": 13.73,
+      "equal_opportunity_diff": 19.41,
+      "predictive_parity_diff": 4.69
+    }
+  }
 }

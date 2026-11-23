@@ -71,17 +71,20 @@ Axis 1: Distributive Objective                      Axis 2: Privacy Constraint
 
 ## 4. Web Application Features
 
-The dashboard runs **100% offline in any modern browser** with bundled local libraries and pre-trained weights:
+The dashboard runs **100% offline in any modern browser** with bundled local libraries, pre-trained weights, and embedded patient vectors:
 
-* **Tab 1: Live Patient Triage (AI Inference)**
-  * Adjust real BRFSS clinical indicators: `GenHlth` (1–5 scale), `BMI`, `HighBP`, `HighChol`, `Stroke`, `HeartDiseaseorAttack`, `DiffWalk`, `Smoker`, `PhysActivity`, `Sex`, `Age`, `Income`, and `PhysHlth`.
-  * Real-time probability prediction across all 8 models computed in sub-milliseconds via $\sigma(\sum w_i x_i + b)$.
-  * **Clinical Decision Threshold ($\tau$) Slider:** Adjust probability cutoffs ($0.15 \le \tau \le 0.85$) to inspect sensitivity-specificity trade-offs across cohorts.
-  * Feature importance ranking identifying `GenHlth` ($+0.718$), `HighBP` ($+0.384$), and `BMI` ($+0.362$) as primary diagnostic drivers.
-* **Tab 2: The Privacy $\times$ Fairness $2 \times 4$ Matrix**
-  * Interactive results table of all 8 models.
-  * Interactive loss curve comparing worst-off loss across privacy budgets.
-  * **`⚡ Run Live Test on 500 Real CDC Patients`:** Evaluates 500 real CDC test patient vectors live in the browser, reporting live subgroup accuracy for high-income vs. low-income cohorts.
+* **Tab 1: Live Patient Triage & Algorithmic Recourse (AI Inference)**
+  * **Real-time Vector Dot-Product Inference:** Real-time probability prediction across all 8 models computed in sub-milliseconds via $\sigma(\sum w_i x_i + b)$ across 14 authentic BRFSS clinical indicators.
+  * **Clinical Decision Threshold ($\tau$) Slider:** Dynamic adjustment of the classification threshold ($0.15 \le \tau \le 0.85$) displaying instant clinical sensitivity/specificity trade-offs.
+  * **Local Counterfactual Algorithmic Recourse (Wachter et al., 2017):** When a patient is classified as high-risk ($P \ge \tau$), a constrained optimization engine computes the minimal, clinically feasible lifestyle modifications ($\Delta \text{BMI}$, $\Delta \text{GenHlth}$, $\Delta \text{PhysHlth}$, smoking cessation, physical activity) required to shift the patient's predicted risk below $\tau$, strictly respecting demographic immutability (Age and Sex remain fixed).
+  * **Feature Importance Ranking:** Identifies `GenHlth` ($+0.718$), `HighBP` ($+0.384$), and `BMI` ($+0.362$) as the primary clinical diagnostic drivers.
+* **Tab 2: The Privacy $\times$ Fairness $2 \times 4$ Matrix & Theoretical Verifications**
+  * **Interactive Model Comparison Matrix:** Live evaluation metrics across all 8 models (Accuracy, AUROC, Loss, Worst-Group Loss, Disparity Gap, Disparate Impact Ratio).
+  * **Privacy Degradation Curve:** Real-time chart tracking worst-off group loss across differential privacy budgets ($\epsilon \in \{\infty, 5.0, 1.0, 0.5\}$).
+  * **Interactive Subgroup ROC Curves:** Interactive Chart.js visualization displaying ROC curves separated by demographic subgroup (High-Income vs. Low-Income), demonstrating the discriminative performance and threshold shifts.
+  * **Intersectional Fairness Matrix (Crenshaw 1989; Buolamwini & Gebru 2018):** Audits model behavior across 4 compound demographic cohorts (High-Inc Young, High-Inc Elderly, Low-Inc Young, Low-Inc Elderly), revealing over 4x prevalence disparity ($7.1\%$ to $29.0\%$) and proving that Rawlsian Minimax Group DRO raises sensitivity by $+2.4\%$ in the compound vulnerable cohort.
+  * **Live Demonstration of Kleinberg's Impossibility Theorem (2016):** Live verification demonstrating that Demographic Parity, Equal Opportunity, and Predictive Parity are mutually incompatible when base rates differ across demographic slices.
+  * **`⚡ Run Live Test on 500 Real CDC Patients`:** In-browser batch evaluation running 500 authentic CDC test patient vectors through the selected model in milliseconds, computing live empirical accuracy for overall, high-income, and low-income cohorts.
 * **Tab 3: Operational Lifecycle Ethics Scorecard**
   * 20-item rubric auditing models across: (1) Problem Formulation, (2) Data Provenance, (3) Algorithmic Optimization, and (4) Post-Market Governance.
   * Pre-loaded benchmarks: CDC BRFSS AI Screening (84.2% - Ethically Robust), Epic Sepsis Model (37.8% - High Risk), Aarogya Setu (44.2%), and Crisis Ventilator Triage (41.6%).

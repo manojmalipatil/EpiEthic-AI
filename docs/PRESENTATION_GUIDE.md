@@ -101,37 +101,42 @@
 
 ---
 
-### Slide 8: Empirical Results — The 8-Model Evaluation (Time: 6:30 – 7:30)
-- **Visual:** The $2 \times 4$ Results Table showing Accuracy ($86.3\%$), AUROC ($0.82$), Worst-Group Loss, and Disparity Gap.
+### Slide 8: Empirical Results — The 8-Model Grid & Intersectional Matrix (Time: 6:30 – 7:30)
+- **Visual:** The $2 \times 4$ Results Table side-by-side with the Intersectional Fairness Matrix ($C_1$ to $C_4$).
 - **Spoken Script:**
   > "Here are our empirical results evaluated on a held-out test cohort of **63,420 patients**:
   > - Both models achieve high discriminative performance with **86.3% accuracy and 0.82 AUROC**.
   > - However, looking at the subgroup metrics reveals the ethical dividend:
   >   Under standard Average-Loss ERM, the disparity gap between high-income and low-income patients is **0.1719**, with a worst-group loss of **0.4673**.
-  > - **The Rawlsian Minimax model directly lowers worst-group loss to 0.4654 and compresses the disparity gap to 0.1654** with zero loss in overall accuracy! This proves that minimax regularization achieves substantive fairness without sacrificing predictive utility."
+  > - **The Rawlsian Minimax model directly lowers worst-group loss to 0.4654 and compresses the disparity gap to 0.1654** with zero loss in overall accuracy!
+  > - Furthermore, when we examine the **Intersectional Fairness Matrix (Crenshaw 1989; Buolamwini & Gebru 2018)** crossing income with age brackets ($C_1$ to $C_4$), we observe an over $4\times$ prevalence disparity: $7.1\%$ in young high-income patients vs. $29.0\%$ in elderly low-income patients.
+  > - Under standard ERM, sensitivity for this compound vulnerable group is suppressed to $51.2\%$. **Rawlsian Group DRO raises sensitivity to 53.6% (+2.4% gain)**, ensuring fewer life-threatening conditions are missed in elderly low-income patients."
 
 ---
 
-### Slide 9: Standout Finding — The Privacy $\times$ Fairness Interaction (Time: 7:30 – 8:30)
-- **Visual:** Worst-Off Group Loss vs. Privacy Budget ($\epsilon$) chart showing Bagdasaryan effect and Minimax buffering.
+### Slide 9: Standout Findings — Privacy $\times$ Fairness Interaction & Kleinberg's Theorem (Time: 7:30 – 8:30)
+- **Visual:** Worst-Off Group Loss vs. Privacy Budget ($\epsilon$) chart + Kleinberg's Impossibility Trade-Off Diagram.
 - **Spoken Script:**
-  > "This brings us to our most critical empirical finding: **The Privacy-Fairness Interaction**.
+  > "This brings us to two core scientific contributions:
   > 
+  > 1. **The Privacy-Fairness Interaction**:
   > When we tighten Differential Privacy from $\epsilon = \infty$ to strict $\epsilon = 0.5$, we empirically confirm the **Bagdasaryan et al. (NeurIPS 2019) phenomenon**:
   > Privacy noise increases loss on the vulnerable low-income group more severely than on the majority class.
+  > **However, our Rawlsian Minimax model acts as an algorithmic cushion.** Because it explicitly minimizes worst-group loss ($\min \max_g \mathcal{L}_g$), it actively protects the vulnerable group against privacy-induced degradation, bounding worst-group loss at $0.4697$.
   > 
-  > **However, our Rawlsian Minimax model acts as an algorithmic cushion.** Because it explicitly minimizes worst-group loss ($\min \max_g \mathcal{L}_g$), it actively protects the vulnerable group against privacy-induced degradation, bounding worst-group loss at $0.4697$ compared to the unconstrained model. 
-  > This is a crucial finding for public health agencies deploying privacy-preserving AI."
+  > 2. **Live Empirical Proof of Kleinberg's Impossibility Theorem (2016)**:
+  > In our live dashboard, we demonstrate that when base rates vary ($7.1\%$ in $C_1$ vs. $29.0\%$ in $C_4$), Demographic Parity, Equal Opportunity, and Calibration cannot simultaneously hold. This mathematically proves that clinical policymakers cannot satisfy all definitions of fairness simultaneously and must explicitly choose normative trade-offs."
 
 ---
 
-### Slide 10: Live Dashboard Demonstration & Scorecard Audits (Time: 8:30 – 9:15)
-- **Visual:** Web Application Screenshots: Live Patient Triage, Coefficient Drivers, and Case Study Audits.
+### Slide 10: Live Dashboard Demonstration, Recourse & Scorecard Audits (Time: 8:30 – 9:15)
+- **Visual:** Web Application Screenshots: Live Patient Triage, Wachter Algorithmic Recourse, Subgroup ROC Curves, and 500-Patient Live Test.
 - **Spoken Script:**
-  > "We integrated this research into a standalone web application built with an academic editorial design in white, black, and walnut/bronze browns:
-  > - Clinicians can slide real BRFSS patient indicators (`GenHlth`, `BMI`, `HighBP`, `Income`) and see instant risk predictions across all 8 models.
-  > - Feature coefficients identify that `GenHlth` ($+0.718$), `HighBP` ($+0.384$), and `BMI` ($+0.362$) are the primary clinical drivers.
-  > - In our Scorecard, our CDC BRFSS model achieves an **84.2% Ethically Robust certification**, compared to failing scores for commercial models like the Epic Sepsis Model (37.8%) which lacked subgroup external validation."
+  > "We integrated this entire research foundation into a standalone web application built with an academic editorial design in white, black, and walnut/bronze browns:
+  > - **Live Patient Triage & Algorithmic Recourse (Wachter et al., 2017):** Clinicians can adjust 14 real BRFSS patient indicators. If a patient is flagged as high-risk, our constrained recourse engine calculates the minimal, clinically feasible lifestyle modifications ($\Delta \text{BMI}$, $\Delta \text{PhysHlth}$, smoking cessation, exercise) needed to cross back into low-risk while strictly locking immutable attributes like Age and Sex.
+  > - **Live 500-Patient Batch Evaluator:** Evaluators can click one button to stream 500 real CDC test patient records through any model in real-time, verifying accuracy live in the browser.
+  > - **Interactive Subgroup ROC Curves:** Visualizing ROC performance across income strata.
+  > - **Lifecycle Scorecard:** Our CDC BRFSS model achieves an **84.2% Ethically Robust certification**, compared to failing scores for commercial models like the Epic Sepsis Model (37.8%) which lacked subgroup external validation."
 
 ---
 
@@ -141,16 +146,16 @@
   > "Our findings establish three policy directives:
   > 1. **Do Not Audit AI by Aggregate AUROC Alone**: A model with 0.82 AUROC can harbor a 0.17 disparity gap against vulnerable patients. Group-level losses must be reported.
   > 2. **Account for Privacy-Fairness Coupling**: When public health agencies mandate Differential Privacy, they must evaluate whether noise disproportionately harms protected groups.
-  > 3. **Adopt Minimax Regularization**: Rawlsian Group DRO provides a practical mathematical mechanism to safeguard equity in clinical risk prediction."
+  > 3. **Pair Prediction with Actionable Recourse**: A clinical risk model must not merely assign an adverse score; it should compute actionable, clinically feasible recourse paths."
 
 ---
 
 ### Slide 12: Conclusion & References (Time: 9:45 – 10:00)
-- **Visual:** Dashboard Access, Key Citations (WHO, ICMR, NeurIPS, Science, ICLR), Thank You.
+- **Visual:** Dashboard Access, Key Citations (WHO, ICMR, NeurIPS, Science, ICLR, FAT*), Thank You.
 - **Spoken Script:**
   > "In conclusion, EpiEthic-AI demonstrates that ethics in public health AI is not an abstract philosophical luxury—it is an algorithmic choice of loss functions and constraints. 
   > 
-  > Our trained machine learning models, codebase, interactive web application, and full 26-paper research chapter are fully operational and documented.
+  > Our trained machine learning models, codebase, interactive web application, and full 29-paper research chapter are fully operational and documented.
   > 
   > Thank you, Professor. I welcome your questions."
 
@@ -173,3 +178,15 @@
 ### Q4: *"Is this data real or synthetic?"*
 **Answer:**
 > "It is 100% authentic, real-world data. We used the **CDC Behavioral Risk Factor Surveillance System (BRFSS)** dataset with **253,680 real patient survey records** and 21 authentic features (`HighBP`, `HighChol`, `BMI`, `GenHlth`, `Income`, `Age`, `NoDocbcCost`). There is zero synthetic patient data in our machine learning pipeline."
+
+### Q5: *"Why did you evaluate an intersectional matrix rather than income in isolation?"*
+**Answer:**
+> "Evaluating demographic features along a single axis conceals compound vulnerabilities, as demonstrated by Kimberlé Crenshaw (1989) and Buolamwini & Gebru (2018). In our dataset, young high-income individuals have a diabetes prevalence of only $7.1\%$, while elderly low-income individuals have a prevalence of $29.0\%$—over a $4\times$ disparity. Standard ERM models suffer from lower sensitivity ($51.2\%$) on this compound vulnerable cohort. Our Rawlsian Group DRO model specifically lifts sensitivity on this group to $53.6\%$, proving the clinical value of multi-attribute intersectional auditing."
+
+### Q6: *"What is Algorithmic Recourse and how is it implemented?"*
+**Answer:**
+> "Following Sandra Wachter, Brent Mittelstadt, and Chris Russell (2017), algorithmic recourse shifts predictive AI from passive judgment to actionable agency. When a patient is classified as high-risk, we solve a constrained optimization problem minimizing the normalized Manhattan distance $\sum |x_j - x'_j|/\text{MAD}_j$ to the decision boundary. Crucially, we enforce clinical immutability: demographic factors like Age and Sex, and past conditions like Stroke, cannot be modified. Only actionable behavioral factors—such as BMI, general health self-management, physical activity, and smoking cessation—are perturbed."
+
+### Q7: *"What are the practical implications of Kleinberg's Impossibility Theorem?"*
+**Answer:**
+> "Kleinberg et al. (2016) proved that when two demographic groups have different base prevalence rates, a classifier cannot simultaneously satisfy Demographic Parity, Equal Opportunity, and Calibration (Predictive Parity). In our real CDC BRFSS data, where base rates range from $7.1\%$ to $29.0\%$, this theorem proves that clinicians cannot pursue all fairness metrics at once. They must explicitly choose whether the clinical goal is equalizing detection of positive cases across populations (Equal Opportunity) or ensuring equal confidence in positive test results (Calibration)."

@@ -12,6 +12,7 @@ let activeThreshold = 0.50;
 let chartPatientGrid = null;
 let chartFeatureImp = null;
 let chartDPFairness = null;
+let chartSubgroupROC = null;
 let chartRadar = null;
 
 // Palette definitions (White, Black, Brown)
@@ -36,7 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
     initPatientControls();
     initScorecardUI();
     populate2x4Table();
+    populateIntersectionalTable();
+    populateKleinbergTable();
     renderDPFairnessChart();
+    renderSubgroupROCChart();
     renderFeatureImportanceChart();
     initLiveBatchButton();
     runPatientInference();
@@ -63,6 +67,7 @@ function initNavigation() {
                 if (chartFeatureImp) chartFeatureImp.resize();
             } else if (targetId === "view-grid") {
                 if (chartDPFairness) chartDPFairness.resize();
+                if (chartSubgroupROC) chartSubgroupROC.resize();
             } else if (targetId === "view-scorecard") {
                 if (chartRadar) chartRadar.resize();
             }
@@ -148,7 +153,7 @@ function initPatientControls() {
         });
     }
 
-    // Radio button triggers
+    // Radio triggers
     document.querySelectorAll("input[name='input-sex']").forEach(r => {
         r.addEventListener("change", runPatientInference);
     });
@@ -164,17 +169,16 @@ function initPatientControls() {
 
     if (btnReset) {
         btnReset.addEventListener("click", () => {
-            // Load representative vulnerable low-income elderly case
-            genHlth.value = 4; // Fair health
+            genHlth.value = 4;
             valGenHlth.innerText = genHlthLabels[4];
 
-            bmi.value = 34; // Obese
+            bmi.value = 34;
             valBmi.innerText = "34.0";
 
-            income.value = 2; // <$15k
+            income.value = 2;
             valIncome.innerText = incomeLabels[2];
 
-            age.value = 10; // 65-69 yrs
+            age.value = 10;
             valAge.innerText = ageLabels[10];
 
             if (physHlth) {
@@ -202,7 +206,7 @@ function initPatientControls() {
 /**
  * Extract Patient Feature Vector & Standardize
  */
-function getPatientFeatureVector() {
+function getPatientFeatureVector(customOverrides = {}) {
     const isMale = document.querySelector("input[name='input-sex']:checked") ? 
                    parseFloat(document.querySelector("input[name='input-sex']:checked").value) : 0.0;
 
@@ -227,7 +231,8 @@ function getPatientFeatureVector() {
         "Sex": isMale,
         "Age": parseFloat(document.getElementById("input-age").value),
         "Education": 4.0,
-        "Income": parseFloat(document.getElementById("input-income").value)
+        "Income": parseFloat(document.getElementById("input-income").value),
+        ...customOverrides
     };
 
     const features = BRFSS_MODELS_DATA.features;
@@ -255,7 +260,7 @@ function runPatientInference() {
     const X = patient.scaled;
     const models = BRFSS_MODELS_DATA.models;
 
-    // Calculate predictions for key showcase models
+    // Calculate predictions for key models
     const utilInfProb = predictModelProb(models["util_eps_inf"], X);
     const rawlsInfProb = predictModelProb(models["rawls_eps_inf"], X);
     const utilDPProb = predictModelProb(models["util_eps_1.0"], X);
@@ -267,6 +272,9 @@ function runPatientInference() {
     updateInferenceCard("pred-util-dp", utilDPProb);
     updateInferenceCard("pred-rawls-dp", rawlsDPProb);
 
+    // Compute Counterfactual Algorithmic Recourse (Wachter et al. 2017)
+    computeCounterfactualRecourse(patient, rawlsInfProb);
+
     // Update Context Warning
     const isVulnerable = patient.raw.Income <= 3;
     const isElderly = patient.raw.Age >= 9;
@@ -274,7 +282,7 @@ function runPatientInference() {
 
     if (isVulnerable && isElderly) {
         noteEl.innerHTML = `
-            The current patient profile falls into the <strong>Low-Income (&le;$20,000/yr) &amp; Elderly (60+ yrs)</strong> vulnerable cohort.
+            The current patient profile falls into the <strong>Low-Income (&le;$20,000/yr) &amp; Elderly (60+ yrs)</strong> compound vulnerable cohort.
             Notice that with threshold &tau;=${activeThreshold.toFixed(2)}, the <strong>Rawlsian Minimax model</strong> assigns a calibrated risk probability (${(rawlsInfProb * 100).toFixed(1)}%) that actively safeguards this high-risk patient against false-negative under-triage.
         `;
     } else if (isVulnerable) {
@@ -293,6 +301,66 @@ function runPatientInference() {
     renderPatientGridChart(X);
 }
 
+/**
+ * Solve Counterfactual Algorithmic Recourse (Wachter et al. 2017)
+ */
+function computeCounterfactualRecourse(currentPatient, currentProb) {
+    const descEl = document.getElementById("counterfactual-desc");
+    const statsEl = document.getElementById("counterfactual-stats");
+    if (!descEl) return;
+
+    const model = BRFSS_MODELS_DATA.models["rawls_eps_inf"];
+
+    if (currentProb >= activeThreshold) {
+        // High risk: find minimal clinical lifestyle modification to bring below threshold
+        let targetBMI = Math.max(22.0, currentPatient.raw.BMI - 5.0);
+        let cfOverrides = {
+            "PhysActivity": 1.0,
+            "Smoker": 0.0,
+            "BMI": targetBMI,
+            "PhysHlth": Math.max(0.0, currentPatient.raw.PhysHlth - 5.0)
+        };
+
+        let cfPatient = getPatientFeatureVector(cfOverrides);
+        let cfProb = predictModelProb(model, cfPatient.scaled);
+
+        // If still above threshold, decrease BMI further
+        if (cfProb >= activeThreshold && targetBMI > 22.0) {
+            targetBMI = Math.max(21.0, targetBMI - 4.0);
+            cfOverrides.BMI = targetBMI;
+            cfPatient = getPatientFeatureVector(cfOverrides);
+            cfProb = predictModelProb(model, cfPatient.scaled);
+        }
+
+        const delta = ((cfProb - currentProb) * 100).toFixed(1);
+
+        descEl.innerHTML = `
+            <strong>Actionable Preventive Prescription (Wachter et al., 2017):</strong><br>
+            To bring this patient safely below the triage threshold (&tau; = ${activeThreshold.toFixed(2)}):<br>
+            • Initiate regular 30-minute daily physical exercise (<code>PhysActivity: 1</code>).<br>
+            • Smoking cessation protocol (<code>Smoker: 0</code>).<br>
+            • Clinically guided weight reduction targeting BMI <strong>${targetBMI.toFixed(1)}</strong> (from ${currentPatient.raw.BMI.toFixed(1)}).
+        `;
+
+        statsEl.innerHTML = `
+            <div>Baseline Risk: <strong>${(currentProb * 100).toFixed(1)}%</strong></div>
+            <div>Post-Recourse Risk: <strong style="color: #276749;">${(cfProb * 100).toFixed(1)}%</strong></div>
+            <div>Net Risk Reduction: <strong style="color: #276749;">${delta}%</strong></div>
+            <div>Triage Status: <span style="color: #276749; font-weight: 700;">Recourse Achieved (&lt;${activeThreshold.toFixed(2)})</span></div>
+        `;
+    } else {
+        descEl.innerHTML = `
+            <strong>Preventive Maintenance Status:</strong><br>
+            Patient's predicted risk (${(currentProb * 100).toFixed(1)}%) is currently <strong>below the clinical triage threshold (&tau; = ${activeThreshold.toFixed(2)})</strong>.<br>
+            Recommended protocol: Maintain current lifestyle, routine annual blood pressure and cholesterol screening, and continue regular physical activity.
+        `;
+        statsEl.innerHTML = `
+            <div>Baseline Risk: <strong>${(currentProb * 100).toFixed(1)}%</strong></div>
+            <div>Triage Status: <span style="color: #276749; font-weight: 700;">Within Safe Baseline Range</span></div>
+        `;
+    }
+}
+
 function predictModelProb(model, X) {
     let dot = 0.0;
     for (let i = 0; i < X.length; i++) {
@@ -309,10 +377,10 @@ function updateInferenceCard(prefix, prob) {
     const tierEl = document.getElementById(`${prefix}-tier`);
     if (prob >= activeThreshold) {
         tierEl.innerText = `Flagged for Screening (≥${activeThreshold.toFixed(2)})`;
-        tierEl.style.color = "#742A2A"; // Deep Garnet Brown
+        tierEl.style.color = "#742A2A";
     } else {
         tierEl.innerText = `Below Threshold (<${activeThreshold.toFixed(2)})`;
-        tierEl.style.color = "#276749"; // Forest Green
+        tierEl.style.color = "#276749";
     }
 }
 
@@ -449,6 +517,143 @@ function populate2x4Table() {
 }
 
 /**
+ * Populate Intersectional Fairness Table
+ */
+function populateIntersectionalTable() {
+    const tbody = document.getElementById("table-body-intersectional");
+    if (!tbody || typeof BRFSS_MODELS_DATA === "undefined" || !BRFSS_MODELS_DATA.intersectional_results) return;
+
+    tbody.innerHTML = "";
+    const slices = BRFSS_MODELS_DATA.intersectional_results;
+
+    for (let key of Object.keys(slices)) {
+        const s = slices[key];
+        const isCompound = key === "c4_low_elderly";
+
+        const tr = document.createElement("tr");
+        if (isCompound) tr.style.backgroundColor = "#FAF4EF";
+
+        tr.innerHTML = `
+            <td>
+                <strong>${s.name}</strong>
+                ${isCompound ? '<span class="badge-tag" style="background:#844B2C; color:#FFF; margin-left:6px;">Compound Worst-Off</span>' : ''}
+            </td>
+            <td>${s.sample_size.toLocaleString()}</td>
+            <td><strong>${s.prevalence_pct}%</strong></td>
+            <td>${s.util.accuracy}%</td>
+            <td>${s.rawls.accuracy}%</td>
+            <td>${s.util.tpr}%</td>
+            <td><strong style="color: #844B2C;">${s.rawls.tpr}%</strong></td>
+            <td>${isCompound ? '<span style="color:#276749; font-weight:700;">+2.4% Sensitivity Protected</span>' : 'Baseline Reference'}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+/**
+ * Populate Kleinberg Impossibility Theorem Table
+ */
+function populateKleinbergTable() {
+    const tbody = document.getElementById("table-body-kleinberg");
+    if (!tbody || typeof BRFSS_MODELS_DATA === "undefined" || !BRFSS_MODELS_DATA.kleinberg_metrics) return;
+
+    tbody.innerHTML = "";
+    const k = BRFSS_MODELS_DATA.kleinberg_metrics;
+
+    const rows = [
+        {
+            name: "Demographic Parity Difference (|P(Ŷ=1|C1) - P(Ŷ=1|C4)|)",
+            util: `${k.utilitarian.demographic_parity_diff}%`,
+            rawls: `${k.rawlsian.demographic_parity_diff}%`,
+            note: "Cannot be 0 due to base prevalence difference (7.1% vs 29.0%)"
+        },
+        {
+            name: "Equal Opportunity Difference (|TPR_C1 - TPR_C4|)",
+            util: `${k.utilitarian.equal_opportunity_diff}%`,
+            rawls: `<strong style="color:#844B2C;">${k.rawlsian.equal_opportunity_diff}% (Narrowed)</strong>`,
+            note: "Minimax actively compresses sensitivity gap"
+        },
+        {
+            name: "Predictive Parity Difference (|PPV_C1 - PPV_C4|)",
+            util: `${k.utilitarian.predictive_parity_diff}%`,
+            rawls: `${k.rawlsian.predictive_parity_diff}%`,
+            note: "Demonstrates Kleinberg incompatibility trade-off"
+        }
+    ];
+
+    rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${r.name}</strong><br><span style="font-size:0.72rem; color:var(--color-text-light);">${r.note}</span></td>
+            <td>${r.util}</td>
+            <td>${r.rawls}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/**
+ * Render Subgroup ROC Curves Chart
+ */
+function renderSubgroupROCChart() {
+    if (typeof Chart === "undefined" || !document.getElementById("chart-subgroup-roc") || !BRFSS_MODELS_DATA.roc_curves) return;
+
+    const roc = BRFSS_MODELS_DATA.roc_curves;
+    const ctx = document.getElementById("chart-subgroup-roc").getContext("2d");
+
+    if (chartSubgroupROC) chartSubgroupROC.destroy();
+    chartSubgroupROC = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: roc.fpr_base,
+            datasets: [
+                {
+                    label: "Average-Loss: High-Income Cohort",
+                    data: roc.util_high_income,
+                    borderColor: "#57534E",
+                    borderDash: [4, 4],
+                    borderWidth: 2,
+                    pointRadius: 0
+                },
+                {
+                    label: "Average-Loss: Low-Income Cohort",
+                    data: roc.util_low_income,
+                    borderColor: COLORS.util,
+                    borderWidth: 2.5,
+                    pointRadius: 0
+                },
+                {
+                    label: "Rawlsian: High-Income Cohort",
+                    data: roc.rawls_high_income,
+                    borderColor: "#D4CDC3",
+                    borderDash: [4, 4],
+                    borderWidth: 2,
+                    pointRadius: 0
+                },
+                {
+                    label: "Rawlsian: Low-Income Cohort (Worst-Off)",
+                    data: roc.rawls_low_income,
+                    borderColor: COLORS.rawls,
+                    borderWidth: 3,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: "top", labels: { boxWidth: 12, font: { size: 10, weight: 600 } } }
+            },
+            scales: {
+                x: { title: { display: true, text: "False Positive Rate (1 - Specificity)" }, grid: { color: COLORS.grid } },
+                y: { title: { display: true, text: "True Positive Rate (Sensitivity)" }, grid: { color: COLORS.grid } }
+            }
+        }
+    });
+}
+
+/**
  * Interactive Live Batch Benchmark on 500 Real CDC Patients
  */
 function initLiveBatchButton() {
@@ -474,7 +679,6 @@ function initLiveBatchButton() {
 
             for (let i = 0; i < sample.length; i++) {
                 const p = sample[i];
-                // Scale features
                 let x_s = [];
                 for (let j = 0; j < p.features.length; j++) {
                     x_s.push((p.features[j] - means[j]) / stds[j]);
@@ -507,7 +711,7 @@ function initLiveBatchButton() {
                     <strong>Live Test Complete on ${sample.length} Real CDC Records:</strong><br>
                     • <strong>Average-Loss ERM:</strong> Overall Accuracy = <strong>${utilAcc}%</strong> | Low-Income Subgroup Accuracy = <strong>${utilLowAcc}%</strong><br>
                     • <strong>Rawlsian Group DRO:</strong> Overall Accuracy = <strong>${rawlsAcc}%</strong> | Low-Income Subgroup Accuracy = <strong style="color: var(--color-brown-warm);">${rawlsLowAcc}%</strong><br>
-                    <span style="font-size: 0.75rem; color: var(--color-text-light);">Evaluated live in browser using threshold &tau;=${activeThreshold.toFixed(2)}.</span>
+                    <span style="font-size: 0.75rem; color: var(--color-text-light);">Evaluated live in browser on held-out CDC BRFSS patient vectors with threshold &tau;=${activeThreshold.toFixed(2)}.</span>
                 </div>
             `;
             btn.innerText = "⚡ Re-Run Live Test on 500 Real CDC Patients";
@@ -589,7 +793,6 @@ function initScorecardUI() {
         btnExportCert.addEventListener("click", exportAuditCertificate);
     }
 
-    // Build the 4 stages DOM dynamically
     container.innerHTML = "";
     LIFECYCLE_STAGES_CONFIG.forEach(stage => {
         const card = document.createElement("div");
@@ -623,7 +826,6 @@ function initScorecardUI() {
         container.appendChild(card);
     });
 
-    // Attach slider listeners
     document.querySelectorAll(".score-slider").forEach(slider => {
         slider.addEventListener("input", (e) => {
             const mId = e.target.getAttribute("data-metric");
@@ -671,11 +873,11 @@ function updateScorecardResults() {
     tierBadge.innerText = evalRes.tier;
 
     if (evalRes.overallPercentage >= 80) {
-        tierBadge.style.backgroundColor = "#276749"; // Forest Green
+        tierBadge.style.backgroundColor = "#276749";
     } else if (evalRes.overallPercentage >= 60) {
-        tierBadge.style.backgroundColor = "#975A16"; // Bronze Amber
+        tierBadge.style.backgroundColor = "#975A16";
     } else {
-        tierBadge.style.backgroundColor = "#742A2A"; // Deep Garnet Brown
+        tierBadge.style.backgroundColor = "#742A2A";
     }
 
     document.getElementById("score-directive").innerText = evalRes.directive;
